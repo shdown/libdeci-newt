@@ -103,11 +103,7 @@ static void parse_str(deci_UWORD *out, const char *s, size_t ns)
     }
 }
 
-#if DECI_WORD_BITS == 32
-#   define DECI_UWORD_FMT PRIu32
-#elif DECI_WORD_BITS == 64
-#   define DECI_UWORD_FMT PRIu64
-#else
+#if DECI_WORD_BITS > 32
 #   error "Unsupported value of DECI_WORD_BITS."
 #endif
 
@@ -123,10 +119,10 @@ static void pretty_print(const deci_UWORD *w, size_t nw)
     }
 
     size_t i = nw - 1;
-    printf("%" DECI_UWORD_FMT, w[i]);
+    printf("%" PRIu32, (uint32_t) w[i]);
     while (i) {
         --i;
-        printf("%0*" DECI_UWORD_FMT, DECI_BASE_LOG, w[i]);
+        printf("%0*" PRIu32, DECI_BASE_LOG, (uint32_t) w[i]);
     }
     printf("\n");
 }

@@ -5,14 +5,14 @@ N2=61
 INPUT_FILE=/tmp/input.txt
 
 checker() {
-    python2 -c 'x=int(input()); y=int(input()); print(x // y)'
+    python3 -c 'x=int(input()); y=int(input()); print(x // y)'
 }
 
 xrand_decimal() {
     ./rng "$1"
 }
 
-for (( i = 0; i < 10000; ++i )); do
+for (( i = 0; i < 1000; ++i )); do
     { xrand_decimal "$N1"; xrand_decimal "$N2"; } > "$INPUT_FILE"
     out=$(./driver < "$INPUT_FILE") || exit $?
     ans=$(checker < "$INPUT_FILE") || exit $?
