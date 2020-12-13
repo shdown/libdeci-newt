@@ -94,7 +94,7 @@ int decinewt_inv(
     //      of such a span is V / DECI_BASE^(L-N), where V is its "normal", integer value, L is its
     //      length in words.
 
-    // We interpret (wd ... wd+nwd) as having scale of 'nwd'. This means that 1/DECI_BASE < d < 1.
+    // We interpret (wd ... wd+nwd) as having scale of 0. This means that 1/DECI_BASE < d < 1.
 
     size_t p = 3;
     while (p < prec) {
