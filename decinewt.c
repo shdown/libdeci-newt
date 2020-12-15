@@ -189,7 +189,7 @@ int decinewt_div(
         memset(s, '\0', offset * sizeof(deci_UWORD));
 
         memmove(
-            /*dst=*/s + 1,
+            /*dst=*/s + nwx - nq,
             /*src=*/q,
             /*n=*/nq * sizeof(deci_UWORD));
 
