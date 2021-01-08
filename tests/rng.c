@@ -21,33 +21,39 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-typedef uint32_t Rng;
+typedef struct {
+    FILE *f;
+} Rng;
 typedef uint32_t RngResult;
 #define RNG_RESULT_NDIGITS 9
 #define RNG_RESULT_FMT PRIu32
 
 static Rng rng_new(void)
 {
-    Rng x;
     FILE *f = fopen("/dev/urandom", "r");
     if (!f) {
         fprintf(stderr, "Cannot open /dev/urandom.\n");
         abort();
     }
-    if (fread(&x, sizeof(x), 1, f) != 1) {
-        fprintf(stderr, "Cannot read from /dev/urandom.\n");
-        abort();
-    }
-    fclose(f);
-    return x;
+    return (Rng) {f};
 }
 
 static RngResult rng_get(Rng *x)
 {
+    uint32_t y;
     do {
-        *x = (*x * 1103515245 + 12345) & 2147483647;
-    } while (*x >= 2000000000);
-    return *x % 1000000000;
+        if (fread(&y, sizeof(y), 1, x->f) != 1) {
+            fprintf(stderr, "Read failure or truncated read from /dev/urandom.\n");
+            abort();
+        }
+    } while (y >= 2000000000);
+    return y % 1000000000;
+}
+
+static void rng_destroy(Rng *x)
+{
+    if (x->f)
+        fclose(x->f);
 }
 
 static void print_inline(int ndigits, RngResult x)
@@ -96,4 +102,5 @@ int main(int argc, char **argv)
     }
     Rng x = rng_new();
     gen_n(&x, n);
+    rng_destroy(&x);
 }
