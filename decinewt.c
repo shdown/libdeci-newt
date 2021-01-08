@@ -54,6 +54,15 @@ size_t decinewt_inv_nscratch(size_t nwd, size_t prec)
     return r;
 }
 
+// Fix a base B \in \N, B > 1.
+//
+// Fix h \in R such that B^3 \le h < B^4.
+//
+// Define:
+//   * r = B^6 / h;
+//   * r_e = floor(B^6 / (floor(h) + 1)).
+// Then
+//   r - 2 < r_e <= r.
 static void calc_x0(deci_UWORD *wd_end, deci_UWORD *out)
 {
     deci_UWORD a[7] = {0, 0, 0, 0, 0, 0, 1};
