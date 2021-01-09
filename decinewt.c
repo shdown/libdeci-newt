@@ -54,15 +54,21 @@ size_t decinewt_inv_nscratch(size_t nwd, size_t prec)
     return r;
 }
 
-// Fix a base B \in \N, B > 1.
+// Fix a base B \in \mathbb{N}, B > 1.
 //
-// Fix h \in R such that B^3 \le h < B^4.
+// Fix h \in \mathbb{R} such that B^3 \le h < B^4.
 //
 // Define:
 //   * r = B^6 / h;
 //   * r_e = floor(B^6 / (floor(h) + 1)).
 // Then
-//   r - 2 < r_e <= r.
+//   r - 2 < r_e \le r.
+// Proof.
+//   The fact that (r_e \le r) is trivial.
+//
+//   Define u = floor(h), r' = B^6 / (u + 1). Note that r_e = floor(r').
+//   Then r - r' = B^6 / (u*(u+1)) \le B^6 / (B^6 + B^3) < 1.
+//   Now we have r - r_e = (r - r') + frac(r') < 1 + 1 = 2.
 static void calc_x0(deci_UWORD *wd_end, deci_UWORD *out)
 {
     deci_UWORD a[7] = {0, 0, 0, 0, 0, 0, 1};
