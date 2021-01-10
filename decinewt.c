@@ -69,7 +69,7 @@ size_t decinewt_inv_nscratch(size_t nwd, size_t prec)
 //   Define u = floor(h), r' = B^6 / (u + 1). Note that r_e = floor(r').
 //   Then r - r' = B^6 / (u*(u+1)) \le B^6 / (B^6 + B^3) < 1.
 //   Now we have r - r_e = (r - r') + frac(r') < 1 + 1 = 2.
-static void calc_x0(deci_UWORD *wd_end, deci_UWORD *out)
+static void get_initial_estimate(deci_UWORD *wd_end, deci_UWORD *out)
 {
     deci_UWORD a[7] = {0, 0, 0, 0, 0, 0, 1};
     deci_UWORD b[4] = {wd_end[-4], wd_end[-3], wd_end[-2], wd_end[-1]};
@@ -82,12 +82,10 @@ static void calc_x0(deci_UWORD *wd_end, deci_UWORD *out)
     }
 
     size_t nr = deci_div(a, a + 7, b, b + 4);
-    nr = deci_normalize_n(a, nr);
-    assert(nr <= 3);
-    for (size_t i = 0; i < nr; ++i)
+    assert(deci_normalize_n(a, nr) == 3);
+    (void) nr;
+    for (int i = 0; i < 3; ++i)
         out[i] = a[i];
-    for (size_t i = nr; i < 3; ++i)
-        out[i] = 0;
 }
 
 int decinewt_inv(
@@ -97,7 +95,7 @@ int decinewt_inv(
         void *userdata,
         decinewt_MUL_CALLBACK mul_callback)
 {
-    calc_x0(wd + nwd, s);
+    get_initial_estimate(wd + nwd, s);
 
     // Notes:
     //
@@ -116,10 +114,12 @@ int decinewt_inv(
         // Invariants:
         //   1. The current root (x_n) is located at (s ... s+p) with scale of 1.
         //   2. x_n has precision of (p - 2) words.
+        //   3. x_n >= 1.
 
         deci_UWORD *v = s + p;
         size_t nv = p + nwd;
         // Calculate v = d * x_n. The scale of v is 1.
+        // BOUNDS: d <= v <= 1.
         if (mul_callback(
             userdata,
             wd, nwd,
@@ -130,12 +130,15 @@ int decinewt_inv(
         }
 
         // Modify v = 2 - v.
+        // BOUNDS: 1 <= v <= 2-d.
         deci_UWORD v_hi = v[nv - 1];
         assert(v_hi == 0 || v_hi == 1);
         bool borrow = deci_uncomplement(v, v + nv - 1);
         v[nv - 1] = 2 - v_hi - borrow;
 
         // Modify v *= x_n. The new scale of v is 2.
+        // BOUNDS: 1 <= v <= (2-d)/d = 2/d-1 < 2*DECI_BASE-1.
+        // BOUNDS: on the other hand, v = answer*(1-(1-x_n)^2) <= answer < DECI_BASE.
         if (mul_callback(
             userdata,
             v, nv,
@@ -146,15 +149,8 @@ int decinewt_inv(
         }
         nv += p;
 
-        // Adjust v.
-        if (v[nv - 1] != 0) {
-            // v >= DECI_BASE
-            v[nv - 1] = 0;
-            for (size_t i = nv - 2; i != ((size_t) -1); --i)
-                v[i] = DECI_BASE - 1;
-        }
-
         // Set x_{n+1} = TRUNCATE(v, next_p).
+        // BOUNDS: 1 <= x_{n+1} < DECI_BASE.
         size_t next_p = 2 * (p - 1);
         if (next_p > prec)
             next_p = prec;
